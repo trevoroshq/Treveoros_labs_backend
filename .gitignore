@@ -1,0 +1,32 @@
+# ── Dependencies ─────────────────────────────────────────────────────
+node_modules/
+
+# ── Build output ──────────────────────────────────────────────────────
+dist/
+
+# ── Environment / Secrets ─────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Logs ─────────────────────────────────────────────────────────────
+*.log
+logs/
+errors.log
+build.log
+build_utf8.log
+tsc_out*.txt
+tsc_errors*.txt
+
+# ── TypeScript ────────────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── OS / Editor ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# ── Prisma ────────────────────────────────────────────────────────────
+# Keep schema.prisma but ignore generated client if committed separately
+# prisma/migrations are safe to commit

@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum Track {
+  FOUNDATION
+  BUILDER
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum CertPerformance {
+  EXCEPTIONAL
+  STRONG
+  SATISFACTORY
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String?   // optional for OAuth users
+  name         String
+  phone        String?
+  role         Role      @default(STUDENT)
+  googleId     String?   @unique
+  githubId     String?   @unique
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  applications       Application[]
+  payments           Payment[]
+  enrollments        Enrollment[]
+  certificates       Certificate[]
+  performances       PerformanceScore[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  userId          String
+  track           Track
+  motivation      String
+  experience      String?
+  portfolio       String?
+  github          String?
+  // Multi-step form fields
+  college         String?
+  degree          String?
+  graduationYear  String?
+  batchDate       String?           // e.g. "2026-05-04"
+  phone           String?
+  status          ApplicationStatus @default(PENDING)
+  adminNotes      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("applications")
+}
+
+model Program {
+  id          String   @id @default(cuid())
+  name        String
+  track       Track
+  description String?
+  price       Int      // in paise (INR)
+  startDate   DateTime
+  endDate     DateTime
+  maxSeats    Int      @default(30)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  enrollments Enrollment[]
+
+  @@map("programs")
+}
+
+model Payment {
+  id               String        @id @default(cuid())
+  userId           String
+  amount           Int           // in paise
+  currency         String        @default("INR")
+  razorpayOrderId  String?       @unique
+  razorpayPaymentId String?      @unique
+  status           PaymentStatus @default(PENDING)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Batch {
+  id           String   @id @default(cuid())
+  name         String
+  track        Track
+  startDate    DateTime
+  endDate      DateTime
+  whatsappLink String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  enrollments  Enrollment[]
+
+  @@map("batches")
+}
+
+model Enrollment {
+  id         String           @id @default(cuid())
+  userId     String
+  programId  String
+  batchId    String?
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  batch   Batch?  @relation(fields: [batchId], references: [id])
+
+  @@unique([userId, programId])
+  @@map("enrollments")
+}
+
+model Certificate {
+  id          String          @id @default(cuid())
+  userId      String
+  code        String          @unique // TL-BUILDER-2025-0001
+  performance CertPerformance
+  programName String
+  pdfUrl      String?
+  issuedAt    DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("certificates")
+}
+
+model PerformanceScore {
+  id             String   @id @default(cuid())
+  userId         String
+  weekNumber     Int
+  projectScore   Int      @default(0) // 0-100
+  quizScore      Int      @default(0)
+  participationScore Int  @default(0)
+  totalScore     Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekNumber])
+  @@map("performance_scores")
+}
