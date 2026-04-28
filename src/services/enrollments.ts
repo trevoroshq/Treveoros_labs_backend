@@ -12,6 +12,16 @@ export async function createEnrollment(userId: string, programId: string) {
     throw new AppError('Already enrolled in this program', 409);
   }
 
+  // Verify user has completed payment
+  const payment = await prisma.payment.findFirst({
+    where: { userId, status: 'COMPLETED' },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!payment) {
+    throw new AppError('Payment not completed. Please complete payment before enrolling.', 402);
+  }
+
   // Determine which track the user applied for
   const application = await prisma.application.findFirst({
     where: { userId, status: 'ACCEPTED' },

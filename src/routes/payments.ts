@@ -3,7 +3,7 @@ import { z } from 'zod';
 import * as paymentsController from '../controllers/payments';
 import { validate } from '../middlewares/validate';
 import { requireAuth, requireAdmin } from '../middlewares/auth';
-import { paymentLimiter } from '../middlewares/rateLimit';
+import { paymentLimiter, webhookLimiter } from '../middlewares/rateLimit';
 
 const router = Router();
 
@@ -19,7 +19,7 @@ const verifySchema = z.object({
 
 router.post('/create-order', requireAuth, paymentLimiter, validate(createOrderSchema), paymentsController.createOrder);
 router.post('/verify', requireAuth, validate(verifySchema), paymentsController.verifyPayment);
-router.post('/webhook', paymentsController.webhook);
+router.post('/webhook', webhookLimiter, paymentsController.webhook);
 router.get('/all', requireAdmin, paymentsController.getAll);
 router.get('/:userId', requireAuth, paymentsController.getByUser);
 

@@ -23,3 +23,16 @@ export const paymentLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const webhookLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // Allow reasonable burst from Razorpay
+  message: { message: 'Webhook rate limit exceeded' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Only apply rate limiting to potentially problematic IPs
+    // Razorpay webhook IPs are stable and from known ranges
+    return false;
+  },
+});

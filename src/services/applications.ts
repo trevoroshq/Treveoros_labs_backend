@@ -102,6 +102,11 @@ export async function updateApplicationStatus(id: string, data: {
     throw new AppError('Application not found', 404);
   }
 
+  // Validate state transitions: once ACCEPTED or REJECTED, cannot change
+  if (application.status === 'ACCEPTED' || application.status === 'REJECTED') {
+    throw new AppError(`Cannot change status of ${application.status} application. Status is final.`, 400);
+  }
+
   const updated = await prisma.application.update({
     where: { id },
     data: {

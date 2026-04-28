@@ -42,11 +42,15 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
-  await requireAuth(req, res, () => {
-    if (req.user?.role !== 'ADMIN') {
-      res.status(403).json({ message: 'Admin access required' });
-      return;
-    }
-    next();
-  });
+  try {
+    await requireAuth(req, res, () => {
+      if (req.user?.role !== 'ADMIN') {
+        res.status(403).json({ message: 'Admin access required' });
+        return;
+      }
+      next();
+    });
+  } catch (error) {
+    res.status(401).json({ message: 'Authentication required' });
+  }
 }

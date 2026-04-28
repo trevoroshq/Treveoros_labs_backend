@@ -30,6 +30,11 @@ export async function verifyPayment(razorpayOrderId: string, razorpayPaymentId: 
     throw new AppError('Payment not found', 404);
   }
 
+  // Idempotency: If already completed, return existing payment without reprocessing
+  if (payment.status === 'COMPLETED') {
+    return payment;
+  }
+
   const isValid = razorpayLib.verifySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
   if (!isValid) {
     throw new AppError('Invalid payment signature', 400);
@@ -49,7 +54,7 @@ export async function verifyPayment(razorpayOrderId: string, razorpayPaymentId: 
   });
   const track = application ? application.track : 'FOUNDATION';
 
-  // Dispatch the async welcome email
+  // Dispatch the async welcome email (only on first completion)
   sendWelcomeEmail(payment.user.email, payment.user.name, track).catch(console.error);
 
   return updatedPayment;

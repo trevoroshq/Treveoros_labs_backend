@@ -2,21 +2,21 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
 if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-  console.warn('RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing from env. Falling back to mock implementation.');
+  console.warn('RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET missing from env. Payments will not work.');
 }
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'mock',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'mock',
+  key_id: process.env.RAZORPAY_KEY_ID || 'missing',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'missing',
 });
 
 export async function createOrder(amount: number): Promise<{ id: string }> {
-  if (process.env.RAZORPAY_KEY_ID === 'mock' || !process.env.RAZORPAY_KEY_ID) {
-    return { id: `order_${Date.now()}_${Math.random().toString(36).substring(7)}` };
+  if (!process.env.RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID === 'missing') {
+    throw new Error('Razorpay configuration missing. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables.');
   }
 
   const options = {
-    amount, // amount in the smallest currency unit
+    amount, // amount in the smallest currency unit (paise)
     currency: 'INR',
     receipt: `receipt_${Date.now()}`
   };
@@ -31,15 +31,23 @@ export async function createOrder(amount: number): Promise<{ id: string }> {
 }
 
 export function verifySignature(orderId: string, paymentId: string, signature: string): boolean {
-  if (process.env.RAZORPAY_KEY_ID === 'mock' || !process.env.RAZORPAY_KEY_ID || signature === 'mock_signature_for_qr_testing') {
-    return true; // Mock validation
+  // In production, NEVER skip signature verification
+  if (!process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_KEY_SECRET === 'missing') {
+    console.error('Razorpay secret key not configured. Cannot verify signature.');
+    throw new Error('Payment verification failed. Configuration error.');
   }
 
   const body = orderId + '|' + paymentId;
   const expectedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(body.toString())
     .digest('hex');
-    
-  return expectedSignature === signature;
+  
+  const isValid = expectedSignature === signature;
+  
+  if (!isValid) {
+    console.error('Invalid payment signature. Order:', orderId, 'Payment:', paymentId);
+  }
+  
+  return isValid;
 }
