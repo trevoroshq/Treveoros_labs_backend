@@ -20,7 +20,8 @@ export async function create(req: Request, res: Response, next: NextFunction): P
 
 export async function getByUser(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const userId = req.params.userId as string;
+    // Handle both /my and /:userId routes
+    const userId = req.params.userId as string || req.user!.id;
     const enrollments = await enrollmentsService.getEnrollmentsByUser(userId);
     res.json({ enrollments });
   } catch (error) {

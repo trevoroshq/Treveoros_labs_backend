@@ -61,6 +61,7 @@ model User {
   performances       PerformanceScore[]
   passwordResetTokens PasswordResetToken[]
 
+  @@index([email])
   @@map("users")
 }
 
@@ -97,6 +98,8 @@ model Application {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([status])
   @@map("applications")
 }
 
@@ -131,6 +134,8 @@ model Payment {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([status])
   @@map("payments")
 }
 
@@ -161,9 +166,11 @@ model Enrollment {
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
-  batch   Batch?  @relation(fields: [batchId], references: [id])
+  batch   Batch?  @relation(fields: [batchId], references: [id], onDelete: SetNull)
 
   @@unique([userId, programId])
+  @@index([userId])
+  @@index([programId])
   @@map("enrollments")
 }
 
@@ -195,5 +202,6 @@ model PerformanceScore {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, weekNumber])
+  @@index([userId])
   @@map("performance_scores")
 }

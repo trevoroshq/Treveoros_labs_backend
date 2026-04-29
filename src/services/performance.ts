@@ -52,9 +52,9 @@ export async function updatePerformance(userId: string, data: {
       totalScore,
     },
     update: {
-      projectScore: data.projectScore,
-      quizScore: data.quizScore,
-      participationScore: data.participationScore,
+      ...(data.projectScore !== undefined && { projectScore: data.projectScore }),
+      ...(data.quizScore !== undefined && { quizScore: data.quizScore }),
+      ...(data.participationScore !== undefined && { participationScore: data.participationScore }),
       totalScore,
     },
   });

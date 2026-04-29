@@ -30,14 +30,16 @@ export async function verifyPayment(razorpayOrderId: string, razorpayPaymentId: 
     throw new AppError('Payment not found', 404);
   }
 
-  // Idempotency: If already completed, return existing payment without reprocessing
-  if (payment.status === 'COMPLETED') {
-    return payment;
-  }
-
+  // CRITICAL: Always verify signature first, before checking status
+  // This prevents race condition where attacker bypasses signature check
   const isValid = razorpayLib.verifySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
   if (!isValid) {
     throw new AppError('Invalid payment signature', 400);
+  }
+
+  // Only after signature is verified, check for idempotency
+  if (payment.status === 'COMPLETED') {
+    return payment;
   }
 
   const updatedPayment = await prisma.payment.update({
@@ -55,7 +57,9 @@ export async function verifyPayment(razorpayOrderId: string, razorpayPaymentId: 
   const track = application ? application.track : 'FOUNDATION';
 
   // Dispatch the async welcome email (only on first completion)
-  sendWelcomeEmail(payment.user.email, payment.user.name, track).catch(console.error);
+  sendWelcomeEmail(payment.user.email, payment.user.name, track).catch(err => {
+    console.error('[Payment] Failed to send welcome email:', err instanceof Error ? err.message : err);
+  });
 
   return updatedPayment;
 }

@@ -39,35 +39,18 @@ router.post('/forgot-password', authLimiter, validate(forgotSchema), authControl
 router.post('/reset-password', authLimiter, validate(resetSchema), authController.resetPassword);
 
 // Google OAuth
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 router.get('/google', 
-  (req, res, next) => {
-    // Store the return URL in session or pass it as state
-    const state = req.query.state || '/dashboard';
-    req.query.state = state;
-    next();
-  },
   passport.authenticate('google', { scope: ['profile', 'email'], session: false })
 );
 router.get('/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed` }),
+  passport.authenticate('google', { session: false, failureRedirect: `${FRONTEND_URL}/login?error=oauth_failed` }),
   (req: Request, res: Response) => {
     const user = req.user as any;
     const token = signToken({ userId: user.id, role: user.role });
     res.cookie('token', token, COOKIE_OPTIONS);
-    // Get return URL from state parameter (already decoded by Passport)
-    let returnTo = (req.query.state as string) || '/dashboard';
-    // Validate redirect URL: must be absolute path starting with single /
-    // Reject: //, //attacker.com, http://, https://, etc.
-    if (!returnTo.startsWith('/') || returnTo.startsWith('//')) {
-      returnTo = '/dashboard';
-    }
-    // Additional validation: ensure no protocol
-    try {
-      new URL('http://localhost' + returnTo);
-    } catch {
-      returnTo = '/dashboard';
-    }
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${returnTo}`);
+    // Redirect to dashboard - token is in secure cookie
+    res.redirect(`${FRONTEND_URL}/dashboard?oauth_success=true`);
   }
 );
 

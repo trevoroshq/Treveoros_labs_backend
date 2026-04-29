@@ -17,9 +17,9 @@ const updateStatusSchema = z.object({
 
 router.post('/student', requireAuth, validate(createSchema), enrollmentsController.create);
 router.post('/', requireAuth, validate(createSchema), enrollmentsController.create);
+router.get('/my', requireAuth, enrollmentsController.getByUser);
 router.get('/all', requireAdmin, enrollmentsController.getAll);
 router.get('/:userId', requireAuth, enrollmentsController.getByUser);
 router.patch('/:id/status', requireAdmin, validate(updateStatusSchema), enrollmentsController.updateStatus);
 
 export default router;
-// Trigger reboot

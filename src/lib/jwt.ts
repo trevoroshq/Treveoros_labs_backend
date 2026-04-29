@@ -15,14 +15,23 @@ interface JwtPayload {
   role: string;
 }
 
+function getSecret(): string {
+  if (!JWT_SECRET) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('FATAL: JWT_SECRET required in production');
+    }
+    return 'dev-secret-change-me';
+  }
+  return JWT_SECRET;
+}
+
 export function signToken(payload: JwtPayload): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const secret = JWT_SECRET || 'dev-secret-change-me';
+  const secret = getSecret();
   return jwt.sign(payload as object, secret, { expiresIn: JWT_EXPIRES_IN } as any);
 }
 
 export function verifyToken(token: string): JwtPayload {
-  const secret = JWT_SECRET || 'dev-secret-change-me';
+  const secret = getSecret();
   return jwt.verify(token, secret) as JwtPayload;
 }
 
