@@ -23,7 +23,7 @@ async function getOrCreateUser(profile: {
   if (existingByEmail) {
     return prisma.user.update({
       where: { id: existingByEmail.id },
-      data: { googleId: profile.id } as any,
+      data: { googleId: profile.id },
     });
   }
 
@@ -33,17 +33,18 @@ async function getOrCreateUser(profile: {
       email,
       name,
       googleId: profile.id,
-    } as any,
+    },
   });
 }
 
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  const backendUrl = process.env.BACKEND_URL || 'https://api.labs.trevoros.com';
   passport.use(new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${process.env.BACKEND_URL || 'http://localhost:4000'}/api/auth/google/callback`,
+      callbackURL: `${backendUrl}/api/auth/google/callback`,
     },
     async (_accessToken, _refreshToken, profile, done) => {
       try {

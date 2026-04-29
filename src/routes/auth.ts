@@ -39,7 +39,7 @@ router.post('/forgot-password', authLimiter, validate(forgotSchema), authControl
 router.post('/reset-password', authLimiter, validate(resetSchema), authController.resetPassword);
 
 // Google OAuth
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://labs.trevoros.com';
 router.get('/google', 
   passport.authenticate('google', { scope: ['profile', 'email'], session: false })
 );
