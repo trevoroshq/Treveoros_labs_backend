@@ -24,7 +24,11 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security
-app.use(helmet());
+// crossOriginResourcePolicy must be 'cross-origin' so the browser can read
+// responses when the frontend calls this API directly (not through the proxy).
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 app.use(cors({
   origin: frontendUrl,
