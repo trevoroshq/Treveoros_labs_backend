@@ -55,6 +55,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         });
         done(null, user);
       } catch (err) {
+        console.error('[Google OAuth] getOrCreateUser failed:', (err as Error).message);
         done(err as Error);
       }
     }

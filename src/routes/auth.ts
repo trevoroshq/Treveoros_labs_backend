@@ -40,17 +40,29 @@ router.post('/reset-password', authLimiter, validate(resetSchema), authControlle
 
 // Google OAuth
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://labs.trevoros.com';
-router.get('/google', 
+router.get('/google',
   passport.authenticate('google', { scope: ['profile', 'email'], session: false })
 );
 router.get('/google/callback',
-  passport.authenticate('google', { session: false, failureRedirect: `${FRONTEND_URL}/login?error=oauth_failed` }),
-  (req: Request, res: Response) => {
-    const user = req.user as any;
-    const token = signToken({ userId: user.id, role: user.role });
-    res.cookie('token', token, COOKIE_OPTIONS);
-    // Redirect to dashboard - token is in secure cookie
-    res.redirect(`${FRONTEND_URL}/dashboard?oauth_success=true`);
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('google', { session: false }, (err: Error | null, user: any, info: any) => {
+      if (err) {
+        console.error('[Google OAuth] Strategy error:', err.message, err.stack);
+        return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+      }
+      if (!user) {
+        console.error('[Google OAuth] No user returned. Info:', JSON.stringify(info));
+        return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+      }
+      try {
+        const token = signToken({ userId: user.id, role: user.role });
+        res.cookie('token', token, COOKIE_OPTIONS);
+        res.redirect(`${FRONTEND_URL}/dashboard?oauth_success=true`);
+      } catch (signErr) {
+        console.error('[Google OAuth] Token sign error:', signErr);
+        res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+      }
+    })(req, res, next);
   }
 );
 
