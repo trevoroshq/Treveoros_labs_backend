@@ -20,6 +20,9 @@ import batchesRoutes from './routes/batches';
 
 const app = express();
 
+// Trust reverse proxy (Render, Railway, etc.) so req.protocol is correct for secure cookies
+app.set('trust proxy', 1);
+
 // Security
 app.use(helmet());
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';

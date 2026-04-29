@@ -41,4 +41,6 @@ export const COOKIE_OPTIONS = {
   sameSite: process.env.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   path: '/',
+  // Share cookie across all subdomains (api.labs.trevoros.com → labs.trevoros.com)
+  ...(process.env.NODE_ENV === 'production' && { domain: '.trevoros.com' }),
 };
