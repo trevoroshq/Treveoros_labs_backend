@@ -27,7 +27,11 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 }
 
 export async function logout(_req: Request, res: Response): Promise<void> {
-  res.clearCookie('token', { path: '/' });
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.clearCookie('token', {
+    path: '/',
+    ...(isProduction && { domain: '.trevoros.com' }),
+  });
   res.json({ message: 'Logged out' });
 }
 
