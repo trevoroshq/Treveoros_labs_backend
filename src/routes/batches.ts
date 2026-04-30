@@ -21,11 +21,11 @@ const createSchema = z.object({
 
 const updateSchema = createSchema.partial();
 
-// List all batches (any authenticated user can view)
-router.get('/', requireAuth, batchesController.list);
+// List all batches (public — no auth needed to see available batch dates)
+router.get('/', batchesController.list);
 
-// Get active batch for a specific track
-router.get('/active/:track', requireAuth, batchesController.getActive);
+// Get active batch for a specific track (public)
+router.get('/active/:track', batchesController.getActive);
 
 // Create (admin only)
 router.post('/', requireAdmin, validate(createSchema), batchesController.create);
