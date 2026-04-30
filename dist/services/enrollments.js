@@ -18,6 +18,14 @@ async function createEnrollment(userId, programId) {
     if (existing) {
         throw new errorHandler_1.AppError('Already enrolled in this program', 409);
     }
+    // Verify user has completed payment
+    const payment = await prisma_1.default.payment.findFirst({
+        where: { userId, status: 'COMPLETED' },
+        orderBy: { createdAt: 'desc' },
+    });
+    if (!payment) {
+        throw new errorHandler_1.AppError('Payment not completed. Please complete payment before enrolling.', 402);
+    }
     // Determine which track the user applied for
     const application = await prisma_1.default.application.findFirst({
         where: { userId, status: 'ACCEPTED' },

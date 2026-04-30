@@ -83,6 +83,10 @@ async function updateApplicationStatus(id, data) {
     if (!application) {
         throw new errorHandler_1.AppError('Application not found', 404);
     }
+    // Validate state transitions: once ACCEPTED or REJECTED, cannot change
+    if (application.status === 'ACCEPTED' || application.status === 'REJECTED') {
+        throw new errorHandler_1.AppError(`Cannot change status of ${application.status} application. Status is final.`, 400);
+    }
     const updated = await prisma_1.default.application.update({
         where: { id },
         data: {

@@ -72,6 +72,11 @@ async function getById(req, res, next) {
     try {
         const id = req.params.id;
         const application = await applicationsService.getApplicationById(id);
+        // Authorization: Users can only view their own applications unless they're admin
+        if (req.user.role !== 'ADMIN' && application.userId !== req.user.id) {
+            res.status(403).json({ message: 'Cannot view other users\' applications' });
+            return;
+        }
         res.json({ application });
     }
     catch (error) {

@@ -22,10 +22,17 @@ const programs_1 = __importDefault(require("./routes/programs"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const batches_1 = __importDefault(require("./routes/batches"));
 const app = (0, express_1.default)();
+// Trust reverse proxy (Render, Railway, etc.) so req.protocol is correct for secure cookies
+app.set('trust proxy', 1);
 // Security
-app.use((0, helmet_1.default)());
+// crossOriginResourcePolicy must be 'cross-origin' so the browser can read
+// responses when the frontend calls this API directly (not through the proxy).
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: frontendUrl,
     credentials: true,
 }));
 // Parsing

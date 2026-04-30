@@ -16,7 +16,11 @@ declare global {
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const token = req.cookies?.token;
+    const raw = req.cookies?.token;
+    // When duplicate cookies exist (e.g. old domain + new domain scope), the
+    // browser sends both and cookie-parser keeps the first. Take the last one
+    // (most recently set) to ensure the freshest token is verified.
+    const token = Array.isArray(raw) ? raw[raw.length - 1] : raw;
 
     if (!token) {
       res.status(401).json({ message: 'Authentication required' });

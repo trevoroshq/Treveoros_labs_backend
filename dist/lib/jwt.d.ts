@@ -5,6 +5,7 @@ interface JwtPayload {
 export declare function signToken(payload: JwtPayload): string;
 export declare function verifyToken(token: string): JwtPayload;
 export declare const COOKIE_OPTIONS: {
+    domain?: string | undefined;
     httpOnly: boolean;
     secure: boolean;
     sameSite: "none" | "lax";

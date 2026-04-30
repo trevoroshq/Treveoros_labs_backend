@@ -10,6 +10,8 @@ export declare function generateCertificate(data: {
     };
 } & {
     id: string;
+    createdAt: Date;
+    updatedAt: Date;
     userId: string;
     code: string;
     performance: import(".prisma/client").$Enums.CertPerformance;
@@ -24,6 +26,8 @@ export declare function verifyCertificate(code: string): Promise<{
     };
 } & {
     id: string;
+    createdAt: Date;
+    updatedAt: Date;
     userId: string;
     code: string;
     performance: import(".prisma/client").$Enums.CertPerformance;
@@ -33,6 +37,8 @@ export declare function verifyCertificate(code: string): Promise<{
 }>;
 export declare function getCertificatesByUser(userId: string): Promise<{
     id: string;
+    createdAt: Date;
+    updatedAt: Date;
     userId: string;
     code: string;
     performance: import(".prisma/client").$Enums.CertPerformance;
@@ -48,6 +54,8 @@ export declare function getAllCertificates(): Promise<({
     };
 } & {
     id: string;
+    createdAt: Date;
+    updatedAt: Date;
     userId: string;
     code: string;
     performance: import(".prisma/client").$Enums.CertPerformance;

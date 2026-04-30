@@ -66,7 +66,8 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
 
 export async function refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const token = req.cookies?.token;
+    const raw = req.cookies?.token;
+    const token = Array.isArray(raw) ? raw[raw.length - 1] : raw;
     console.log('[Refresh] Token present:', !!token);
 
     if (!token) {

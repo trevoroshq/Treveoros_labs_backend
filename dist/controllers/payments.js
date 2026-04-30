@@ -60,11 +60,16 @@ async function verifyPayment(req, res, next) {
         next(error);
     }
 }
-// Razorpay server-to-server webhook (no signature check — use only for logging/reconciliation)
+// Razorpay server-to-server webhook (signature verification required)
 async function webhook(req, res, next) {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-        const payment = await paymentsService.verifyPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature || '');
+        // Signature must be present and non-empty
+        if (!razorpay_signature || typeof razorpay_signature !== 'string' || razorpay_signature.trim() === '') {
+            res.status(400).json({ message: 'Missing or invalid signature' });
+            return;
+        }
+        const payment = await paymentsService.verifyPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
         res.json({ message: 'Webhook processed', payment });
     }
     catch (error) {
@@ -74,6 +79,11 @@ async function webhook(req, res, next) {
 async function getByUser(req, res, next) {
     try {
         const userId = req.params.userId;
+        // Authorization: Users can only view their own payment history
+        if (userId !== req.user.id) {
+            res.status(403).json({ message: 'Cannot view other users\' payment history' });
+            return;
+        }
         const payments = await paymentsService.getPaymentsByUser(userId);
         res.json({ payments });
     }

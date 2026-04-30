@@ -50,7 +50,7 @@ const verifySchema = zod_1.z.object({
 });
 router.post('/create-order', auth_1.requireAuth, rateLimit_1.paymentLimiter, (0, validate_1.validate)(createOrderSchema), paymentsController.createOrder);
 router.post('/verify', auth_1.requireAuth, (0, validate_1.validate)(verifySchema), paymentsController.verifyPayment);
-router.post('/webhook', paymentsController.webhook);
+router.post('/webhook', rateLimit_1.webhookLimiter, paymentsController.webhook);
 router.get('/all', auth_1.requireAdmin, paymentsController.getAll);
 router.get('/:userId', auth_1.requireAuth, paymentsController.getByUser);
 exports.default = router;

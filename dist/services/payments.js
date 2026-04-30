@@ -65,9 +65,15 @@ async function verifyPayment(razorpayOrderId, razorpayPaymentId, razorpaySignatu
     if (!payment) {
         throw new errorHandler_1.AppError('Payment not found', 404);
     }
+    // CRITICAL: Always verify signature first, before checking status
+    // This prevents race condition where attacker bypasses signature check
     const isValid = razorpayLib.verifySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature);
     if (!isValid) {
         throw new errorHandler_1.AppError('Invalid payment signature', 400);
+    }
+    // Only after signature is verified, check for idempotency
+    if (payment.status === 'COMPLETED') {
+        return payment;
     }
     const updatedPayment = await prisma_1.default.payment.update({
         where: { id: payment.id },
@@ -81,8 +87,10 @@ async function verifyPayment(razorpayOrderId, razorpayPaymentId, razorpaySignatu
         where: { userId: payment.userId, status: 'ACCEPTED' },
     });
     const track = application ? application.track : 'FOUNDATION';
-    // Dispatch the async welcome email
-    (0, email_1.sendWelcomeEmail)(payment.user.email, payment.user.name, track).catch(console.error);
+    // Dispatch the async welcome email (only on first completion)
+    (0, email_1.sendWelcomeEmail)(payment.user.email, payment.user.name, track).catch(err => {
+        console.error('[Payment] Failed to send welcome email:', err instanceof Error ? err.message : err);
+    });
     return updatedPayment;
 }
 async function getPaymentsByUser(userId) {

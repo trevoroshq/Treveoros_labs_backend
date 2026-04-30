@@ -48,9 +48,9 @@ const updateStatusSchema = zod_1.z.object({
 });
 router.post('/student', auth_1.requireAuth, (0, validate_1.validate)(createSchema), enrollmentsController.create);
 router.post('/', auth_1.requireAuth, (0, validate_1.validate)(createSchema), enrollmentsController.create);
+router.get('/my', auth_1.requireAuth, enrollmentsController.getByUser);
 router.get('/all', auth_1.requireAdmin, enrollmentsController.getAll);
 router.get('/:userId', auth_1.requireAuth, enrollmentsController.getByUser);
 router.patch('/:id/status', auth_1.requireAdmin, (0, validate_1.validate)(updateStatusSchema), enrollmentsController.updateStatus);
 exports.default = router;
-// Trigger reboot
 //# sourceMappingURL=enrollments.js.map

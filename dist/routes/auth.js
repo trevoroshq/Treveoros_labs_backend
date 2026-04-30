@@ -66,17 +66,33 @@ const resetSchema = zod_1.z.object({
 router.post('/register', rateLimit_1.authLimiter, (0, validate_1.validate)(registerSchema), authController.register);
 router.post('/login', rateLimit_1.authLimiter, (0, validate_1.validate)(loginSchema), authController.login);
 router.post('/logout', authController.logout);
+router.post('/refresh', authController.refresh);
 router.get('/me', auth_1.requireAuth, authController.me);
 router.post('/forgot-password', rateLimit_1.authLimiter, (0, validate_1.validate)(forgotSchema), authController.forgotPassword);
 router.post('/reset-password', rateLimit_1.authLimiter, (0, validate_1.validate)(resetSchema), authController.resetPassword);
 // Google OAuth
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://labs.trevoros.com';
 router.get('/google', passport_1.default.authenticate('google', { scope: ['profile', 'email'], session: false }));
-router.get('/google/callback', passport_1.default.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=oauth_failed` }), (req, res) => {
-    const user = req.user;
-    const token = (0, jwt_1.signToken)({ userId: user.id, role: user.role });
-    res.cookie('token', token, jwt_1.COOKIE_OPTIONS);
-    const returnTo = req.query.state || '/dashboard';
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${returnTo}`);
+router.get('/google/callback', (req, res, next) => {
+    passport_1.default.authenticate('google', { session: false }, (err, user, info) => {
+        if (err) {
+            console.error('[Google OAuth] Strategy error:', err.message, err.stack);
+            return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+        }
+        if (!user) {
+            console.error('[Google OAuth] No user returned. Info:', JSON.stringify(info));
+            return res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+        }
+        try {
+            const token = (0, jwt_1.signToken)({ userId: user.id, role: user.role });
+            res.cookie('token', token, jwt_1.COOKIE_OPTIONS);
+            res.redirect(`${FRONTEND_URL}/dashboard?oauth_success=true`);
+        }
+        catch (signErr) {
+            console.error('[Google OAuth] Token sign error:', signErr);
+            res.redirect(`${FRONTEND_URL}/login?error=oauth_failed`);
+        }
+    })(req, res, next);
 });
 exports.default = router;
 //# sourceMappingURL=auth.js.map

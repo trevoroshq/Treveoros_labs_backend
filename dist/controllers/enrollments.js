@@ -41,6 +41,11 @@ const enrollmentsService = __importStar(require("../services/enrollments"));
 async function create(req, res, next) {
     try {
         const { userId, programId } = req.body;
+        // Authorization: Users can only enroll themselves unless they're admin
+        if (req.user.role !== 'ADMIN' && userId !== req.user.id) {
+            res.status(403).json({ message: 'Can only enroll yourself' });
+            return;
+        }
         const enrollment = await enrollmentsService.createEnrollment(userId, programId);
         res.status(201).json({ message: 'Enrolled successfully', enrollment });
     }
@@ -50,7 +55,8 @@ async function create(req, res, next) {
 }
 async function getByUser(req, res, next) {
     try {
-        const userId = req.params.userId;
+        // Handle both /my and /:userId routes
+        const userId = req.params.userId || req.user.id;
         const enrollments = await enrollmentsService.getEnrollmentsByUser(userId);
         res.json({ enrollments });
     }

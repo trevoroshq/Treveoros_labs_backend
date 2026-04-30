@@ -31,12 +31,17 @@ async function requireAuth(req, res, next) {
     }
 }
 async function requireAdmin(req, res, next) {
-    await requireAuth(req, res, () => {
-        if (req.user?.role !== 'ADMIN') {
-            res.status(403).json({ message: 'Admin access required' });
-            return;
-        }
-        next();
-    });
+    try {
+        await requireAuth(req, res, () => {
+            if (req.user?.role !== 'ADMIN') {
+                res.status(403).json({ message: 'Admin access required' });
+                return;
+            }
+            next();
+        });
+    }
+    catch (error) {
+        res.status(401).json({ message: 'Authentication required' });
+    }
 }
 //# sourceMappingURL=auth.js.map

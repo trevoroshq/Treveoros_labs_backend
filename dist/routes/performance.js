@@ -46,7 +46,14 @@ const updateSchema = zod_1.z.object({
     participationScore: zod_1.z.number().min(0).max(100).optional(),
 });
 router.get('/leaderboard', performanceController.leaderboard);
-router.get('/:userId', auth_1.requireAuth, performanceController.getByUser);
+router.get('/:userId', auth_1.requireAuth, (req, res, next) => {
+    // Authorization: Users can only view their own performance unless they're admin
+    if (req.user.role !== 'ADMIN' && req.params.userId !== req.user.id) {
+        res.status(403).json({ message: 'Cannot view other users\' performance scores' });
+        return;
+    }
+    next();
+}, performanceController.getByUser);
 router.patch('/:userId', auth_1.requireAdmin, (0, validate_1.validate)(updateSchema), performanceController.update);
 exports.default = router;
 //# sourceMappingURL=performance.js.map
