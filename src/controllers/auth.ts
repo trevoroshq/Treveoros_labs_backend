@@ -67,6 +67,7 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
 export async function refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const token = req.cookies?.token;
+    console.log('[Refresh] Token present:', !!token);
 
     if (!token) {
       res.status(401).json({ message: 'No token provided' });
@@ -75,6 +76,7 @@ export async function refresh(req: Request, res: Response, next: NextFunction): 
 
     // Verify the token (will throw if expired or invalid)
     const payload = verifyToken(token);
+    console.log('[Refresh] Token verified for user:', payload.userId);
 
     // Get the user from the database
     const user = await prisma.user.findUnique({
@@ -83,6 +85,7 @@ export async function refresh(req: Request, res: Response, next: NextFunction): 
     });
 
     if (!user) {
+      console.log('[Refresh] User not found:', payload.userId);
       res.status(401).json({ message: 'User not found' });
       return;
     }
@@ -90,8 +93,10 @@ export async function refresh(req: Request, res: Response, next: NextFunction): 
     // Issue a new token
     const newToken = signToken({ userId: user.id, role: user.role });
     res.cookie('token', newToken, COOKIE_OPTIONS);
+    console.log('[Refresh] New token issued for user:', user.id);
     res.json({ message: 'Token refreshed', user });
   } catch (error) {
+    console.error('[Refresh] Error:', error instanceof Error ? error.message : String(error));
     next(error);
   }
 }
