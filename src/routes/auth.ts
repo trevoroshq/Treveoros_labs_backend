@@ -34,6 +34,7 @@ const resetSchema = z.object({
 router.post('/register', authLimiter, validate(registerSchema), authController.register);
 router.post('/login', authLimiter, validate(loginSchema), authController.login);
 router.post('/logout', authController.logout);
+router.post('/refresh', authController.refresh);
 router.get('/me', requireAuth, authController.me);
 router.post('/forgot-password', authLimiter, validate(forgotSchema), authController.forgotPassword);
 router.post('/reset-password', authLimiter, validate(resetSchema), authController.resetPassword);

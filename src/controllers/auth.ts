@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { registerUser, loginUser, getUserById, requestPasswordReset, resetPassword as resetPasswordService } from '../services/auth';
-import { COOKIE_OPTIONS } from '../lib/jwt';
+import { COOKIE_OPTIONS, signToken, verifyToken } from '../lib/jwt';
+import prisma from '../lib/prisma';
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -58,6 +59,38 @@ export async function resetPassword(req: Request, res: Response, next: NextFunct
     const { token, password } = req.body;
     const result = await resetPasswordService(token, password);
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function refresh(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const token = req.cookies?.token;
+
+    if (!token) {
+      res.status(401).json({ message: 'No token provided' });
+      return;
+    }
+
+    // Verify the token (will throw if expired or invalid)
+    const payload = verifyToken(token);
+
+    // Get the user from the database
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, name: true, phone: true, role: true },
+    });
+
+    if (!user) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
+
+    // Issue a new token
+    const newToken = signToken({ userId: user.id, role: user.role });
+    res.cookie('token', newToken, COOKIE_OPTIONS);
+    res.json({ message: 'Token refreshed', user });
   } catch (error) {
     next(error);
   }
