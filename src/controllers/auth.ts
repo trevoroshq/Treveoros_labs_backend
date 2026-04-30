@@ -86,7 +86,12 @@ export async function refresh(req: Request, res: Response, next: NextFunction): 
     });
 
     if (!user) {
-      console.log('[Refresh] User not found:', payload.userId);
+      console.log('[Refresh] User not found, clearing stale cookie:', payload.userId);
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.clearCookie('token', {
+        path: '/',
+        ...(isProduction && { domain: '.trevoros.com' }),
+      });
       res.status(401).json({ message: 'User not found' });
       return;
     }
